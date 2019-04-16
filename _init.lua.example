@@ -1,0 +1,53 @@
+-- _init.lua
+-- LFS autorun script.
+
+--[[
+--		Node that only one of SPIFFS:init.lua or LFS:_init gets run.
+]]--
+
+local function addLoader ( index )
+
+   --[[
+	--		This function adds a package loader to the firmware.  Since NodeMCU only uses the
+	--		one from the second index position by default, this lets you confifure loaders into
+	--		the first, and/or third position.  The firmware, going in order from 1 to 4, will
+	--		either look for modules in the LFS before (index 1), or after (index 3) looking in
+	--		SPIFFS (default, index 2).
+	--
+	--		index	 	string		The argument passed by require ( ).
+	]]--
+
+	package.loaders[index] = function ( modname )
+
+		--[[
+		--		This function is inserted as a package loader,
+		--		which is called in turn by require('modname').
+		--
+		--		modname		string		The desired module.
+		--
+		--		Returns:	function	On success; or
+		--					error		on failure.
+		--
+		--		Credit:		nodemcu-firmware/lua_examples/lfs/_init.lua
+		]]--
+
+		local func, unkn = node.flashindex ( modname )
+
+		return unkn and error ( 'Module not in LFS.' ) or func
+
+	end
+
+end
+
+-- Setup package loader to load modules.
+addLoader ( 3 )
+
+-- Load and configure messaging and logging facility.
+require ( 'modname' )
+require ( 'othermodname' )
+
+-- Run default init file from SPIFFS (if any).
+dofile ( 'init.lua' )
+
+
+-- End of File
